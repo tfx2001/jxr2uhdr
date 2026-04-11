@@ -1,4 +1,3 @@
-
 #[allow(unused)]
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 /// Pixel format enum
