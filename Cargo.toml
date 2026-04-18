@@ -9,14 +9,6 @@ bytemuck = "1.25.0"
 clap = { version = "4.6.0", features = ["derive"] }
 env_logger = "0.11.10"
 half = "2.7.1"
-jpegxr = "0.3.1"
+jpegxr = { git = "https://github.com/tfx2001/jpegxr", rev = "7dc5413eb40cb91c7ce5960bfeb51a0205a14d34" }
 log = "0.4.29"
-
-[target.'cfg(not(linux))'.dependencies]
-ultrahdr = "0.1.3"
-
-# Disable vendored feature on Linux to avoid build issues with libjpeg-turbo and to use the system's libjpeg-dev instead.
-[target.'cfg(linux)'.dependencies]
-ultrahdr = { version = "0.1.3", default-features = false, features = [
-    "iso21496",
-] }
+ultrahdr = { git = "https://github.com/tfx2001/libultrahdr-rs", rev = "12df08e1185b2442f57b2ca5956a2b5d252acd55" }
