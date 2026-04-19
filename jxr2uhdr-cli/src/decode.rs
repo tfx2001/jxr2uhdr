@@ -41,6 +41,10 @@ where
         jpegxr::PixelFormat::PixelFormat128bppRGBAFloat => {
             (width as usize * 16, PixelFormat::PixelFormat128bppRGBAFloat)
         }
+        jpegxr::PixelFormat::PixelFormat64bppRGBAHalf => (
+            width as usize * 8,
+            PixelFormat::PixelFormat64bppRGBAHalfFloat,
+        ),
         _ => {
             return Err(anyhow::anyhow!(
                 "Unsupported pixel format: {:?}",
