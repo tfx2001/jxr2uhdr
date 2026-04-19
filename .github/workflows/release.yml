@@ -58,7 +58,7 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Build release binary
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} -p ${{ env.BIN_NAME }}
 
       - name: Prepare release asset
         shell: bash

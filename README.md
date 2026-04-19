@@ -21,13 +21,13 @@ output.jpg  (Ultra HDR JPEG, backward-compatible SDR + HDR gain map)
 ## Installation
 
 ```bash
-cargo install --path .
+cargo install --path jxr2uhdr-cli
 ```
 
 Or build without installing:
 
 ```bash
-cargo build --release
+cargo build --release -p jxr2uhdr
 # Binary: target/release/jxr2uhdr
 ```
 
@@ -61,16 +61,16 @@ RUST_LOG=debug jxr2uhdr -i screenshot.jxr -o output.jpg
 
 ```bash
 # Debug build
-cargo build
+cargo build -p jxr2uhdr
 
 # Release build (recommended for production use)
-cargo build --release
+cargo build --release -p jxr2uhdr
 ```
 
 ## Test
 
 ```bash
-cargo test
+cargo test --workspace
 ```
 
 ## License

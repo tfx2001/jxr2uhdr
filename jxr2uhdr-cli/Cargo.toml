@@ -1,0 +1,14 @@
+[package]
+name = "jxr2uhdr"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+bytemuck.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+half.workspace = true
+jpegxr.workspace = true
+log.workspace = true
+ultrahdr.workspace = true

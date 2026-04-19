@@ -1,9 +1,12 @@
-[package]
-name = "jxr2uhdr"
+[workspace]
+members = ["jxr2uhdr-cli"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0"
 bytemuck = "1.25.0"
 clap = { version = "4.6.0", features = ["derive"] }
