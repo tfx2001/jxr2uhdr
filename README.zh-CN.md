@@ -19,13 +19,13 @@ output.jpg （Ultra HDR JPEG，向下兼容 SDR + HDR gain map）
 ## 安装
 
 ```bash
-cargo install --path .
+cargo install --path jxr2uhdr-cli
 ```
 
 或仅构建，不安装：
 
 ```bash
-cargo build --release
+cargo build --release -p jxr2uhdr
 # 产物路径：target/release/jxr2uhdr
 ```
 
@@ -59,16 +59,16 @@ RUST_LOG=debug jxr2uhdr -i screenshot.jxr -o output.jpg
 
 ```bash
 # 调试构建
-cargo build
+cargo build -p jxr2uhdr
 
 # Release 构建（推荐正式使用）
-cargo build --release
+cargo build --release -p jxr2uhdr
 ```
 
 ## 测试
 
 ```bash
-cargo test
+cargo test --workspace
 ```
 
 ## 许可证
