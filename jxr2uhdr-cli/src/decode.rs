@@ -72,3 +72,70 @@ where
         format: output_format,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    fn fixture_path() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/sunrise-hdr.jxr")
+    }
+
+    #[test]
+    fn decode_jxr_file_returns_expected_image_metadata() {
+        let fixture = fixture_path();
+
+        let image = decode_jxr(
+            fixture
+                .to_str()
+                .expect("fixture path should be valid UTF-8"),
+        )
+        .expect("sample JXR fixture should decode successfully");
+
+        assert_eq!(image.width, 3440);
+        assert_eq!(image.height, 1440);
+        assert_eq!(image.format, PixelFormat::PixelFormat64bppRGBAHalfFloat);
+        assert_eq!(
+            image.pixels.len(),
+            image.width as usize * image.height as usize * 8
+        );
+        assert!(image.pixels.iter().any(|&byte| byte != 0));
+    }
+
+    #[test]
+    fn decode_jxr_bytes_matches_file_decode_result() {
+        let fixture = fixture_path();
+        let bytes = fs::read(&fixture).expect("sample JXR fixture should be readable");
+
+        let decoded_from_bytes =
+            decode_jxr_bytes(&bytes).expect("sample JXR bytes should decode successfully");
+
+        assert_eq!(decoded_from_bytes.width, 3440);
+        assert_eq!(decoded_from_bytes.height, 1440);
+        assert_eq!(
+            decoded_from_bytes.format,
+            PixelFormat::PixelFormat64bppRGBAHalfFloat
+        );
+        assert_eq!(
+            decoded_from_bytes.pixels.len(),
+            decoded_from_bytes.width as usize * decoded_from_bytes.height as usize * 8
+        );
+        assert!(decoded_from_bytes.pixels.iter().any(|&byte| byte != 0));
+    }
+
+    #[test]
+    fn decode_jxr_bytes_rejects_invalid_input() {
+        let error = match decode_jxr_bytes(b"not a valid jxr stream") {
+            Ok(_) => panic!("invalid bytes should fail to decode"),
+            Err(error) => error,
+        };
+
+        assert!(
+            format!("{error:#}").contains("Failed to initialize JXR decoder"),
+            "unexpected error: {error:#}"
+        );
+    }
+}
