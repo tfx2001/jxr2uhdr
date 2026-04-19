@@ -34,7 +34,8 @@ pub fn encode_ultra_hdr_to_vec(image: &mut Image, quality: i32) -> Result<Vec<u8
 
     encoder.set_raw_image(&mut hdr_image, ImgLabel::UHDR_HDR_IMG)?;
 
-    encoder.set_quality(quality, ImgLabel::UHDR_HDR_IMG)?;
+    encoder.set_quality(quality, ImgLabel::UHDR_BASE_IMG)?;
+    encoder.set_quality(quality, ImgLabel::UHDR_GAIN_MAP_IMG)?;
 
     encoder.encode().context("Failed to encode Ultra HDR")?;
 
