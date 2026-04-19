@@ -1,0 +1,26 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+*.tsbuildinfo
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Wasm build artifacts (built by scripts/build-wasm.sh)
+public/wasm/*.js
+public/wasm/*.wasm
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

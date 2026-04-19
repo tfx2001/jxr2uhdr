@@ -8,4 +8,12 @@ rustflags = [
     "link-arg=-sALLOW_MEMORY_GROWTH=1",
     "-C",
     "link-arg=-sINVOKE_RUN=0",
+    "-C",
+    "link-arg=-sMODULARIZE=1",
+    "-C",
+    "link-arg=-sEXPORT_NAME=jxr2uhdrModule",
+    "-C",
+    "link-arg=-sEXPORTED_FUNCTIONS=['_malloc','_free','_jxr_decode_jxr','_jxr_encode_ultra_hdr','_jxr_image_encode_ultra_hdr','_jxr_image_width','_jxr_image_height','_jxr_image_pixels_ptr','_jxr_image_pixels_len','_jxr_image_free','_jxr_buffer_ptr','_jxr_buffer_len','_jxr_buffer_free','_jxr_last_error_message_ptr','_jxr_last_error_message_len']",
+    "-C",
+    "link-arg=-sEXPORTED_RUNTIME_METHODS=['HEAPU8']",
 ]
