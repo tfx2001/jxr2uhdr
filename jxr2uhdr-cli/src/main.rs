@@ -1,13 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
+use jxr2uhdr::{decode, encode};
 use log::info;
-
-mod convert;
-mod decode;
-mod encode;
-mod types;
-#[cfg(target_os = "emscripten")]
-mod wasm;
 
 #[derive(Parser, Debug)]
 #[command(
