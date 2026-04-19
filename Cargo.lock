@@ -320,7 +320,7 @@ dependencies = [
 [[package]]
 name = "jpegxr"
 version = "0.3.1"
-source = "git+https://github.com/tfx2001/jpegxr?rev=7dc5413eb40cb91c7ce5960bfeb51a0205a14d34#7dc5413eb40cb91c7ce5960bfeb51a0205a14d34"
+source = "git+https://github.com/tfx2001/jpegxr?rev=ea6606b7a81c1955a318f7cda02a69a6267a8efd#ea6606b7a81c1955a318f7cda02a69a6267a8efd"
 dependencies = [
  "bindgen",
  "cc",
@@ -542,7 +542,7 @@ dependencies = [
 [[package]]
 name = "ultrahdr"
 version = "0.1.3"
-source = "git+https://github.com/tfx2001/libultrahdr-rs?rev=12df08e1185b2442f57b2ca5956a2b5d252acd55#12df08e1185b2442f57b2ca5956a2b5d252acd55"
+source = "git+https://github.com/tfx2001/libultrahdr-rs?rev=ce818466c97132ab94c082d7db5dd89d88e6c656#ce818466c97132ab94c082d7db5dd89d88e6c656"
 dependencies = [
  "ultrahdr-sys",
 ]
@@ -550,7 +550,7 @@ dependencies = [
 [[package]]
 name = "ultrahdr-sys"
 version = "0.1.3"
-source = "git+https://github.com/tfx2001/libultrahdr-rs?rev=12df08e1185b2442f57b2ca5956a2b5d252acd55#12df08e1185b2442f57b2ca5956a2b5d252acd55"
+source = "git+https://github.com/tfx2001/libultrahdr-rs?rev=ce818466c97132ab94c082d7db5dd89d88e6c656#ce818466c97132ab94c082d7db5dd89d88e6c656"
 dependencies = [
  "bindgen",
  "cmake",

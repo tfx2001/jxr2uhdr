@@ -2,33 +2,35 @@ name: Build and Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build-and-test:
-    name: Build and Test (${{ matrix.os }})
+    name: Build and Test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - os: macos-latest
-            target: aarch64-apple-darwin
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: wasm32-unknown-emscripten
+            os: ubuntu-latest
     env:
       ULTRAHDR_SKIP_PATCHES: ${{ matrix.os == 'windows-latest' && 1 || 0 }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -48,10 +50,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Setup emsdk
+        if: matrix.target == 'wasm32-unknown-emscripten'
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: 5.0.6
+          actions-cache-folder: "emsdk-cache"
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Run tests
+        if: matrix.target != 'wasm32-unknown-emscripten'
         run: cargo test --target ${{ matrix.target }}
 
       - name: Check formatting

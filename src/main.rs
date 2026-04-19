@@ -6,8 +6,8 @@ mod convert;
 mod decode;
 mod encode;
 mod types;
-
-use types::Image;
+#[cfg(target_os = "emscripten")]
+mod wasm;
 
 #[derive(Parser, Debug)]
 #[command(
