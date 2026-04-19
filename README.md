@@ -6,6 +6,8 @@ English | [中文](README.zh-CN.md)
 
 Convert JPEG XR (`.jxr`) HDR images to [Ultra HDR](https://developer.android.com/media/platform/hdr-image-format) JPEG files.
 
+🌐 **Try it online:** [https://tfx2001.github.io/jxr2uhdr/](https://tfx2001.github.io/jxr2uhdr/) — Browser-based converter powered by WebAssembly, no installation required.
+
 Ultra HDR is a backward-compatible JPEG format developed by Google that embeds an HDR gain map alongside a standard SDR base image. The resulting file can be displayed as normal SDR on legacy devices, while HDR-capable displays render the full high dynamic range.
 
 ## Use Case
