@@ -1,4 +1,6 @@
+#![allow(unused)]
 use std::fs::File;
+use std::io::{Cursor, Read, Seek};
 
 use anyhow::{Context, Result};
 use jpegxr::ImageDecode;
@@ -10,8 +12,20 @@ use crate::types::{Image, PixelFormat};
 /// Decode JXR image to [`Image`] and convert to 64bppRGBAHalfFloat format
 pub fn decode_jxr(path: &str) -> Result<Image> {
     let input_file = File::open(path).context("Failed to open JXR file")?;
+    decode_jxr_reader(input_file)
+}
+
+/// Decode JXR bytes to [`Image`] and convert to 64bppRGBAHalfFloat format
+pub fn decode_jxr_bytes(bytes: &[u8]) -> Result<Image> {
+    decode_jxr_reader(Cursor::new(bytes))
+}
+
+fn decode_jxr_reader<R>(reader: R) -> Result<Image>
+where
+    R: Read + Seek,
+{
     let mut decoder =
-        ImageDecode::with_reader(input_file).context("Failed to initialize JXR decoder")?;
+        ImageDecode::with_reader(reader).context("Failed to initialize JXR decoder")?;
 
     let (width, height) = decoder
         .get_size()
