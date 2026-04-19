@@ -4,6 +4,8 @@
 
 将 JPEG XR（`.jxr`）HDR 图像转换为 [Ultra HDR](https://developer.android.com/media/platform/hdr-image-format) JPEG 文件。
 
+🌐 **在线体验：** [https://tfx2001.github.io/jxr2uhdr/](https://tfx2001.github.io/jxr2uhdr/) — 基于 WebAssembly 的浏览器端转换器，无需安装任何软件。
+
 Ultra HDR 是 Google 推出的一种向下兼容的 JPEG 格式，在标准 SDR 基础图像之上嵌入 HDR 增益图。生成的文件在不支持 HDR 的设备上仍可作为普通 JPEG 显示，而支持 HDR 的显示器则能还原完整的高动态范围。
 
 ## 使用场景

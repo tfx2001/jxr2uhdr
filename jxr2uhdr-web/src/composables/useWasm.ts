@@ -57,12 +57,12 @@ export async function loadWasmModule(): Promise<Jxr2uhdrModule> {
     const existing = (globalThis as Record<string, unknown>)[globalName];
     if (typeof existing === "function") {
       const factory = existing as Jxr2uhdrModuleFactory;
-      factory({ locateFile: (p: string) => `/wasm/${p}` }).then(resolve, reject);
+      factory({ locateFile: (p: string) => `wasm/${p}` }).then(resolve, reject);
       return;
     }
 
     const script = document.createElement("script");
-    script.src = "/wasm/jxr2uhdr.js";
+    script.src = "wasm/jxr2uhdr.js";
     script.async = true;
     script.onload = () => {
       const factory = (globalThis as Record<string, unknown>)[globalName];
@@ -71,10 +71,10 @@ export async function loadWasmModule(): Promise<Jxr2uhdrModule> {
         return;
       }
       (factory as Jxr2uhdrModuleFactory)({
-        locateFile: (p: string) => `/wasm/${p}`,
+        locateFile: (p: string) => `wasm/${p}`,
       }).then(resolve, reject);
     };
-    script.onerror = () => reject(new Error("Failed to load /wasm/jxr2uhdr.js"));
+    script.onerror = () => reject(new Error("Failed to load wasm/jxr2uhdr.js"));
     document.head.appendChild(script);
   }).catch((err) => {
     // Clear initPromise on failure to allow retry
