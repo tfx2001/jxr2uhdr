@@ -14,4 +14,4 @@ env_logger = "0.11.10"
 half = "2.7.1"
 jpegxr = { git = "https://github.com/tfx2001/jpegxr", rev = "ea6606b7a81c1955a318f7cda02a69a6267a8efd" }
 log = "0.4.29"
-ultrahdr = { git = "https://github.com/tfx2001/libultrahdr-rs", rev = "ce818466c97132ab94c082d7db5dd89d88e6c656" }
+ultrahdr = "0.1.4"
