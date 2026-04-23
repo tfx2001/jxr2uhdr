@@ -2,13 +2,8 @@ name: Deploy Web
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "jxr2uhdr-web/**"
-      - "jxr2uhdr-cli/**"
-      - "Cargo.*"
-      - "scripts/**"
-      - ".github/workflows/deploy-web.yml"
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
