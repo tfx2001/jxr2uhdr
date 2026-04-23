@@ -67,7 +67,7 @@ jobs:
           cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}${{ matrix.binary_suffix }}" "dist/${{ matrix.asset_name }}"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.asset_name }}

@@ -73,7 +73,7 @@ jobs:
         run: cargo clippy --workspace --target ${{ matrix.target }} -- -D warnings
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jxr2uhdr-${{ matrix.target }}
           path: |
