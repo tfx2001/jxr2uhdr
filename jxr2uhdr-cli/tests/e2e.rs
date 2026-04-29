@@ -19,6 +19,13 @@ fn unique_output_path() -> PathBuf {
     ))
 }
 
+fn assert_contains_marker(encoded: &[u8], marker: &[u8], description: &str) {
+    assert!(
+        encoded.windows(marker.len()).any(|window| window == marker),
+        "output should contain {description}"
+    );
+}
+
 #[test]
 fn cli_converts_sample_jxr_to_ultra_hdr_jpeg() {
     let input = fixture_path();
@@ -45,11 +52,50 @@ fn cli_converts_sample_jxr_to_ultra_hdr_jpeg() {
 
     assert!(encoded.len() > 1024, "encoded JPEG should not be tiny");
     assert_eq!(&encoded[..2], &[0xFF, 0xD8], "output should be a JPEG");
-    assert!(
-        encoded
-            .windows(b"urn:iso:std:iso:ts:21496:-1".len())
-            .any(|window| window == b"urn:iso:std:iso:ts:21496:-1"),
-        "output should contain the Ultra HDR ISO marker"
+    assert_contains_marker(
+        &encoded,
+        b"urn:iso:std:iso:ts:21496:-1",
+        "the Ultra HDR ISO marker",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"http://ns.google.com/photos/1.0/container/",
+        "the Ultra HDR XMP container namespace",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"http://ns.google.com/photos/1.0/container/item/",
+        "the Ultra HDR XMP container item namespace",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"http://ns.adobe.com/hdr-gain-map/1.0/",
+        "the HDR gain map XMP namespace",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"Item:Semantic=\"Primary\"",
+        "the XMP primary image directory entry",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"Item:Semantic=\"GainMap\"",
+        "the XMP gain map directory entry",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"hdrgm:GainMapMax=",
+        "the gain map maximum XMP field",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"hdrgm:HDRCapacityMax=",
+        "the HDR capacity maximum XMP field",
+    );
+    assert_contains_marker(
+        &encoded,
+        b"hdrgm:BaseRenditionIsHDR=\"False\"",
+        "the SDR base rendition XMP field",
     );
 
     fs::remove_file(&output).expect("temporary output should be removable");
