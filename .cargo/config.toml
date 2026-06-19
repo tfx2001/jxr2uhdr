@@ -1,9 +1,13 @@
 [env]
 EM_CACHE = { value = "target/emscripten-cache", relative = true }
-EMCC_CFLAGS = "-sSUPPORT_LONGJMP=wasm"
+EMCC_CFLAGS = "-msimd128 -sSUPPORT_LONGJMP=wasm"
 
 [target.wasm32-unknown-emscripten]
 rustflags = [
+    "-C",
+    "target-feature=+simd128",
+    "-C",
+    "link-arg=-msimd128",
     "-C",
     "link-arg=-sALLOW_MEMORY_GROWTH=1",
     "-C",
