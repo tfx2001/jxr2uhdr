@@ -32,10 +32,10 @@ fn main() -> Result<()> {
         .init();
 
     info!("Decoding {}...", cli.input);
-    let mut hdr_image = decode::decode_jxr(&cli.input)?;
+    let hdr_image = decode::decode_jxr(&cli.input)?;
 
     info!("Encoding Ultra HDR...");
-    encode::encode_ultra_hdr(&mut hdr_image, cli.quality as i32, &cli.output)?;
+    encode::encode_ultra_hdr(&hdr_image, cli.quality as i32, &cli.output)?;
 
     info!("Successfully saved Ultra HDR image to {}", cli.output);
 

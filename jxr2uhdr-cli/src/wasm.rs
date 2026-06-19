@@ -10,9 +10,7 @@ use std::slice;
 
 use crate::decode::decode_jxr_bytes;
 use crate::encode::encode_ultra_hdr_to_vec;
-use crate::types::{Image, PixelFormat};
-
-const RGBA_HALF_FLOAT_BYTES_PER_PIXEL: usize = 8;
+use crate::{Image, PixelFormat};
 
 thread_local! {
     static LAST_ERROR: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
@@ -66,16 +64,16 @@ pub extern "C" fn jxr_image_encode_ultra_hdr(
 #[unsafe(no_mangle)]
 pub extern "C" fn jxr_image_width(handle: *const ImageHandle) -> u32 {
     export_result(|| {
-        let image = unsafe { image_handle_ref(handle)? };
-        Ok(image.inner.width)
+        let image = &unsafe { image_handle_ref(handle)? }.inner;
+        Ok(image.width())
     })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn jxr_image_height(handle: *const ImageHandle) -> u32 {
     export_result(|| {
-        let image = unsafe { image_handle_ref(handle)? };
-        Ok(image.inner.height)
+        let image = &unsafe { image_handle_ref(handle)? }.inner;
+        Ok(image.height())
     })
 }
 
@@ -83,7 +81,7 @@ pub extern "C" fn jxr_image_height(handle: *const ImageHandle) -> u32 {
 pub extern "C" fn jxr_image_pixels_ptr(handle: *const ImageHandle) -> *const u8 {
     export_result(|| {
         let image = unsafe { image_handle_ref(handle)? };
-        Ok(image.inner.pixels.as_ptr())
+        Ok(image.inner.as_slice().as_ptr())
     })
 }
 
@@ -91,7 +89,7 @@ pub extern "C" fn jxr_image_pixels_ptr(handle: *const ImageHandle) -> *const u8 
 pub extern "C" fn jxr_image_pixels_len(handle: *const ImageHandle) -> usize {
     export_result(|| {
         let image = unsafe { image_handle_ref(handle)? };
-        Ok(image.inner.pixels.len())
+        Ok(image.inner.as_slice().len())
     })
 }
 
@@ -162,27 +160,13 @@ fn export_result<T: Default>(f: impl FnOnce() -> Result<T, String>) -> T {
 }
 
 fn image_from_rgba_half_float(width: u32, height: u32, pixels: &[u8]) -> Result<Image, String> {
-    let expected_len = expected_rgba_half_float_len(width, height)?;
-    if pixels.len() != expected_len {
-        return Err(format!(
-            "Expected {expected_len} bytes for a {width}x{height} 64bpp RGBA half-float image, got {} bytes",
-            pixels.len()
-        ));
-    }
-
-    Ok(Image {
-        pixels: pixels.to_vec(),
+    Image::from_bytes(
         width,
         height,
-        format: PixelFormat::PixelFormat64bppRGBAHalfFloat,
-    })
-}
-
-fn expected_rgba_half_float_len(width: u32, height: u32) -> Result<usize, String> {
-    (width as usize)
-        .checked_mul(height as usize)
-        .and_then(|pixels| pixels.checked_mul(RGBA_HALF_FLOAT_BYTES_PER_PIXEL))
-        .ok_or_else(|| "Image dimensions overflow the RGBA half-float buffer size".to_string())
+        PixelFormat::PixelFormat64bppRGBAHalfFloat,
+        pixels.to_vec(),
+    )
+    .map_err(|error| error.to_string())
 }
 
 unsafe fn bytes_from_raw<'a>(ptr: *const u8, len: usize) -> Result<&'a [u8], String> {

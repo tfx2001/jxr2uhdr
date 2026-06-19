@@ -1,12 +1,11 @@
-#![allow(unused)]
 use std::fs::File;
 use std::io::{Cursor, Read, Seek};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use jpegxr::ImageDecode;
 use log::debug;
 
-use crate::types::{Image, PixelFormat};
+use crate::{Image, PixelFormat};
 
 /// Decode JXR image to [`Image`].
 pub fn decode_jxr(path: &str) -> Result<Image> {
@@ -36,35 +35,37 @@ where
         .context("Failed to get pixel format")?;
     debug!("Pixel format: {:?}", pixel_format);
 
-    let (stride, input_format) = match pixel_format {
-        jpegxr::PixelFormat::PixelFormat128bppRGBAFloat => {
-            (width as usize * 16, PixelFormat::PixelFormat128bppRGBAFloat)
-        }
-        jpegxr::PixelFormat::PixelFormat64bppRGBAHalf => (
-            width as usize * 8,
-            PixelFormat::PixelFormat64bppRGBAHalfFloat,
-        ),
-        _ => {
-            return Err(anyhow::anyhow!(
-                "Unsupported pixel format: {:?}",
-                pixel_format
-            ));
-        }
-    };
-
-    let size = stride * height as usize;
+    let input_format: PixelFormat = pixel_format.try_into()?;
+    let bytes_per_pixel = input_format.bytes_per_pixel();
+    let stride = (width as usize)
+        .checked_mul(bytes_per_pixel)
+        .context("Width multiplication overflow")?;
+    let size = stride
+        .checked_mul(height as usize)
+        .context("Image size overflow")?;
 
     let mut buffer = vec![0u8; size];
     decoder
         .copy_all(&mut buffer, stride)
         .context("Failed to decode JXR pixels")?;
 
-    Ok(Image {
-        pixels: buffer,
-        width: width as u32,
-        height: height as u32,
-        format: input_format,
-    })
+    Image::from_bytes(width as u32, height as u32, input_format, buffer)
+}
+
+impl TryFrom<jpegxr::PixelFormat> for PixelFormat {
+    type Error = anyhow::Error;
+
+    fn try_from(format: jpegxr::PixelFormat) -> Result<Self, Self::Error> {
+        match format {
+            jpegxr::PixelFormat::PixelFormat128bppRGBAFloat => {
+                Ok(PixelFormat::PixelFormat128bppRGBAFloat)
+            }
+            jpegxr::PixelFormat::PixelFormat64bppRGBAHalf => {
+                Ok(PixelFormat::PixelFormat64bppRGBAHalfFloat)
+            }
+            unsupported => Err(anyhow!("Unsupported pixel format: {unsupported:?}")),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -89,14 +90,14 @@ mod tests {
         )
         .expect("sample JXR fixture should decode successfully");
 
-        assert_eq!(image.width, 3440);
-        assert_eq!(image.height, 1440);
-        assert_eq!(image.format, PixelFormat::PixelFormat128bppRGBAFloat);
+        assert_eq!(image.width(), 3440);
+        assert_eq!(image.height(), 1440);
+        assert_eq!(image.format(), PixelFormat::PixelFormat128bppRGBAFloat);
         assert_eq!(
-            image.pixels.len(),
-            image.width as usize * image.height as usize * 16
+            image.as_slice().len(),
+            image.width() as usize * image.height() as usize * 16
         );
-        assert!(image.pixels.iter().any(|&byte| byte != 0));
+        assert!(image.as_slice().iter().any(|&byte| byte != 0));
     }
 
     #[test]
@@ -107,17 +108,17 @@ mod tests {
         let decoded_from_bytes =
             decode_jxr_bytes(&bytes).expect("sample JXR bytes should decode successfully");
 
-        assert_eq!(decoded_from_bytes.width, 3440);
-        assert_eq!(decoded_from_bytes.height, 1440);
+        assert_eq!(decoded_from_bytes.width(), 3440);
+        assert_eq!(decoded_from_bytes.height(), 1440);
         assert_eq!(
-            decoded_from_bytes.format,
+            decoded_from_bytes.format(),
             PixelFormat::PixelFormat128bppRGBAFloat
         );
         assert_eq!(
-            decoded_from_bytes.pixels.len(),
-            decoded_from_bytes.width as usize * decoded_from_bytes.height as usize * 16
+            decoded_from_bytes.as_slice().len(),
+            decoded_from_bytes.width() as usize * decoded_from_bytes.height() as usize * 16
         );
-        assert!(decoded_from_bytes.pixels.iter().any(|&byte| byte != 0));
+        assert!(decoded_from_bytes.as_slice().iter().any(|&byte| byte != 0));
     }
 
     #[test]
