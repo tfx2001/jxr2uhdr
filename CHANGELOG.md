@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add local Hable tonemapping for SDR base image generation.
+- Add WebAssembly SIMD build flags for Emscripten targets.
+
+### Changed
+
+- Preserve decoded 128bpp RGBA f32 pixels until encoding, converting to f16 only for Ultra HDR gain map generation.
+- Replace infallible f32-to-f16 byte casting with checked `bytemuck::try_cast_slice` error handling.
+
 ## [0.2.1] - 2026-04-30
 
 ### Fixed
