@@ -1,6 +1,7 @@
 pub mod convert;
 pub mod decode;
 pub mod encode;
+pub mod tonemap;
 pub mod types;
 
 #[cfg(target_os = "emscripten")]

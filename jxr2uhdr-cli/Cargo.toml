@@ -12,3 +12,4 @@ half.workspace = true
 jpegxr.workspace = true
 log.workspace = true
 ultrahdr.workspace = true
+linear-srgb.workspace = true

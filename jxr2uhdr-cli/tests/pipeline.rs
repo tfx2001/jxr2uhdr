@@ -18,7 +18,7 @@ fn decode_fixture() -> jxr2uhdr::types::Image {
 fn converts_sample_jxr_to_ultra_hdr_bytes() {
     let mut image = decode_fixture();
 
-    assert_eq!(image.format, PixelFormat::PixelFormat64bppRGBAHalfFloat);
+    assert_eq!(image.format, PixelFormat::PixelFormat128bppRGBAFloat);
 
     let encoded = encode_ultra_hdr_to_vec(&mut image, 90)
         .expect("decoded image should encode to Ultra HDR bytes");

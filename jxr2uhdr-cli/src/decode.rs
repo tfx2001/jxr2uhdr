@@ -6,16 +6,15 @@ use anyhow::{Context, Result};
 use jpegxr::ImageDecode;
 use log::debug;
 
-use crate::convert::convert_128bpp_f32_to_64bpp_f16;
 use crate::types::{Image, PixelFormat};
 
-/// Decode JXR image to [`Image`] and convert to 64bppRGBAHalfFloat format
+/// Decode JXR image to [`Image`].
 pub fn decode_jxr(path: &str) -> Result<Image> {
     let input_file = File::open(path).context("Failed to open JXR file")?;
     decode_jxr_reader(input_file)
 }
 
-/// Decode JXR bytes to [`Image`] and convert to 64bppRGBAHalfFloat format
+/// Decode JXR bytes to [`Image`].
 pub fn decode_jxr_bytes(bytes: &[u8]) -> Result<Image> {
     decode_jxr_reader(Cursor::new(bytes))
 }
@@ -60,20 +59,11 @@ where
         .copy_all(&mut buffer, stride)
         .context("Failed to decode JXR pixels")?;
 
-    let (pixels, output_format) = if input_format == PixelFormat::PixelFormat128bppRGBAFloat {
-        (
-            convert_128bpp_f32_to_64bpp_f16(&buffer),
-            PixelFormat::PixelFormat64bppRGBAHalfFloat,
-        )
-    } else {
-        (buffer, input_format)
-    };
-
     Ok(Image {
-        pixels,
+        pixels: buffer,
         width: width as u32,
         height: height as u32,
-        format: output_format,
+        format: input_format,
     })
 }
 
@@ -101,10 +91,10 @@ mod tests {
 
         assert_eq!(image.width, 3440);
         assert_eq!(image.height, 1440);
-        assert_eq!(image.format, PixelFormat::PixelFormat64bppRGBAHalfFloat);
+        assert_eq!(image.format, PixelFormat::PixelFormat128bppRGBAFloat);
         assert_eq!(
             image.pixels.len(),
-            image.width as usize * image.height as usize * 8
+            image.width as usize * image.height as usize * 16
         );
         assert!(image.pixels.iter().any(|&byte| byte != 0));
     }
@@ -121,11 +111,11 @@ mod tests {
         assert_eq!(decoded_from_bytes.height, 1440);
         assert_eq!(
             decoded_from_bytes.format,
-            PixelFormat::PixelFormat64bppRGBAHalfFloat
+            PixelFormat::PixelFormat128bppRGBAFloat
         );
         assert_eq!(
             decoded_from_bytes.pixels.len(),
-            decoded_from_bytes.width as usize * decoded_from_bytes.height as usize * 8
+            decoded_from_bytes.width as usize * decoded_from_bytes.height as usize * 16
         );
         assert!(decoded_from_bytes.pixels.iter().any(|&byte| byte != 0));
     }
