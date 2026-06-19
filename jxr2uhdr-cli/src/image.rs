@@ -103,6 +103,61 @@ impl Image {
 
         Self::from_bytes(self.width, self.height, format, pixels)
     }
+
+    pub fn scale_rgb(&mut self, scale: f32) -> Result<&mut Self> {
+        match self.format {
+            PixelFormat::PixelFormat128bppRGBAFloat => {
+                for pixel in self.pixels.chunks_exact_mut(16) {
+                    let red = f32_from_le_bytes(&pixel[0..4]) * scale;
+                    let green = f32_from_le_bytes(&pixel[4..8]) * scale;
+                    let blue = f32_from_le_bytes(&pixel[8..12]) * scale;
+
+                    pixel[0..4].copy_from_slice(&red.to_le_bytes());
+                    pixel[4..8].copy_from_slice(&green.to_le_bytes());
+                    pixel[8..12].copy_from_slice(&blue.to_le_bytes());
+                }
+            }
+            PixelFormat::PixelFormat64bppRGBAHalfFloat => {
+                for pixel in self.pixels.chunks_exact_mut(8) {
+                    let red = f16::from_le_bytes([pixel[0], pixel[1]]).to_f32() * scale;
+                    let green = f16::from_le_bytes([pixel[2], pixel[3]]).to_f32() * scale;
+                    let blue = f16::from_le_bytes([pixel[4], pixel[5]]).to_f32() * scale;
+
+                    pixel[0..2].copy_from_slice(&f16::from_f32(red).to_le_bytes());
+                    pixel[2..4].copy_from_slice(&f16::from_f32(green).to_le_bytes());
+                    pixel[4..6].copy_from_slice(&f16::from_f32(blue).to_le_bytes());
+                }
+            }
+        }
+
+        Ok(self)
+    }
+
+    /// Return finite positive max-RGB values for each valid pixel.
+    pub fn positive_max_rgb_values(&self) -> Result<Vec<f32>> {
+        match self.format {
+            PixelFormat::PixelFormat128bppRGBAFloat => Ok(self
+                .pixels
+                .chunks_exact(16)
+                .filter_map(|pixel| {
+                    let red = f32_from_le_bytes(&pixel[0..4]);
+                    let green = f32_from_le_bytes(&pixel[4..8]);
+                    let blue = f32_from_le_bytes(&pixel[8..12]);
+                    finite_positive_max_rgb(red, green, blue)
+                })
+                .collect()),
+            PixelFormat::PixelFormat64bppRGBAHalfFloat => Ok(self
+                .pixels
+                .chunks_exact(8)
+                .filter_map(|pixel| {
+                    let red = f16::from_le_bytes([pixel[0], pixel[1]]).to_f32();
+                    let green = f16::from_le_bytes([pixel[2], pixel[3]]).to_f32();
+                    let blue = f16::from_le_bytes([pixel[4], pixel[5]]).to_f32();
+                    finite_positive_max_rgb(red, green, blue)
+                })
+                .collect()),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -199,6 +254,15 @@ fn ensure_pixel_len(
 
 fn f32_from_le_bytes(bytes: &[u8]) -> f32 {
     f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
+}
+
+fn finite_positive_max_rgb(red: f32, green: f32, blue: f32) -> Option<f32> {
+    if !red.is_finite() || !green.is_finite() || !blue.is_finite() {
+        return None;
+    }
+
+    let max_rgb = red.max(green).max(blue);
+    (max_rgb > 0.0).then_some(max_rgb)
 }
 
 #[cfg(test)]
@@ -312,6 +376,58 @@ mod tests {
         assert_eq!(output.height(), 1);
         assert_eq!(output.format(), PixelFormat::PixelFormat128bppRGBAFloat);
         assert_eq!(output.as_slice(), original_pixels.as_slice());
+    }
+
+    #[test]
+    fn scale_rgb_scales_f32_rgb_without_scaling_alpha() {
+        let mut image = Image::f32_image(1, 1, &[1.0, 2.0, 4.0, 0.5]);
+
+        let output = image
+            .scale_rgb(0.5)
+            .expect("valid f32 image should scale RGB");
+
+        assert_eq!(output.format(), PixelFormat::PixelFormat128bppRGBAFloat);
+        assert_eq!(output.to_pixels::<f32>().unwrap(), [0.5, 1.0, 2.0, 0.5]);
+    }
+
+    #[test]
+    fn scale_rgb_scales_f16_rgb_without_scaling_alpha() {
+        let mut image = Image::f16_image(1, 1, &[1.0, 2.0, 4.0, 0.5]);
+
+        let output = image
+            .scale_rgb(0.5)
+            .expect("valid f16 image should scale RGB");
+
+        assert_eq!(output.format(), PixelFormat::PixelFormat64bppRGBAHalfFloat);
+        assert_eq!(f16_bytes_to_f32(output.as_slice()), [0.5, 1.0, 2.0, 0.5]);
+    }
+
+    #[test]
+    fn reads_positive_max_rgb_values_from_image_pixels() {
+        let image = Image::f32_image(
+            3,
+            1,
+            &[
+                1.0,
+                2.0,
+                4.0,
+                1.0,
+                f32::NAN,
+                8.0,
+                1.0,
+                1.0,
+                -1.0,
+                -2.0,
+                -3.0,
+                1.0,
+            ],
+        );
+
+        let output = image
+            .positive_max_rgb_values()
+            .expect("valid f32 image should expose positive max RGB values");
+
+        assert_eq!(output, [4.0]);
     }
 
     #[test]
