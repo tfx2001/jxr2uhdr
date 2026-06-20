@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-20
+
 ### Added
 
 - Add local Hable tonemapping for SDR base image generation.
@@ -40,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
-[unreleased]: https://github.com/tfx2001/jxr2uhdr/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/tfx2001/jxr2uhdr/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/tfx2001/jxr2uhdr/releases/tag/v0.3.0
 [0.2.1]: https://github.com/tfx2001/jxr2uhdr/releases/tag/v0.2.1
 [0.2.0]: https://github.com/tfx2001/jxr2uhdr/releases/tag/v0.2.0
 [0.1.1]: https://github.com/tfx2001/jxr2uhdr/releases/tag/v0.1.1
