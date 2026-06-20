@@ -1,7 +1,5 @@
 # jxr2uhdr
 
-> **⚠️ Work in Progress** — This is a personal side project, not actively maintained. Use at your own risk.
-
 English | [中文](README.zh-CN.md)
 
 Convert JPEG XR (`.jxr`) HDR images to [Ultra HDR](https://developer.android.com/media/platform/hdr-image-format) JPEG files.
@@ -14,10 +12,28 @@ Ultra HDR is a backward-compatible JPEG format developed by Google that embeds a
 
 NVIDIA's in-game screenshot capture tool saves HDR frames as JPEG XR (128bpp RGBA float). This tool converts those captures directly to Ultra HDR JPEG, which is natively supported on Android 14+ and modern displays.
 
-```
-input.jxr  (128bpp RGBA f32, HDR)
-    ↓  jxr2uhdr
-output.jpg  (Ultra HDR JPEG, backward-compatible SDR + HDR gain map)
+Current conversion pipeline:
+
+```mermaid
+flowchart LR
+    input["input.jxr<br/>JPEG XR HDR<br/>128bpp RGBA f32 or 64bpp RGBA f16"]
+    decode["Decode JPEG XR<br/>jpegxr::ImageDecode"]
+    image["Linear RGBA image buffer"]
+    sdr["SDR base branch"]
+    tonemap["Hable filmic tonemapping<br/>linear RGB to sRGB RGBA8888"]
+    sdr_raw["SDR RawImage<br/>BT.709 / sRGB / full range"]
+    hdr["HDR intent branch"]
+    scale["Scale scRGB 80-nit reference white<br/>to Ultra HDR 203-nit linear white"]
+    hdr_raw["HDR RawImage<br/>RGBA f16 / linear / full range"]
+    peak["Estimate target display peak brightness<br/>from HDR RGB peak percentile"]
+    encoder["libultrahdr Encoder"]
+    output["output.jpg<br/>Ultra HDR JPEG<br/>SDR base + HDR gain map"]
+
+    input --> decode --> image
+    image --> sdr --> tonemap --> sdr_raw --> encoder
+    image --> hdr --> scale --> hdr_raw --> encoder
+    image --> peak --> encoder
+    encoder --> output
 ```
 
 ## Installation
