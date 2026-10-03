@@ -38,15 +38,10 @@ flowchart LR
 
 ## Installation
 
-```bash
-cargo install --path jxr2uhdr-cli
-```
-
-Or build without installing:
+Download the binary for your platform from the [latest release](https://github.com/tfx2001/jxr2uhdr/releases/latest), or build and install from source using Cargo:
 
 ```bash
-cargo build --release -p jxr2uhdr
-# Binary: target/release/jxr2uhdr
+cargo install --git https://github.com/tfx2001/jxr2uhdr
 ```
 
 ## Usage
