@@ -20,7 +20,7 @@ impl PixelFormat {
 /// HDR image data structure, used to pass data between decoding and encoding
 #[derive(Clone)]
 pub struct Image {
-    pixels: Vec<u8>,
+    bytes: Vec<u8>,
     width: u32,
     height: u32,
     format: PixelFormat,
@@ -39,14 +39,14 @@ impl Image {
         width: u32,
         height: u32,
         format: PixelFormat,
-        pixels: impl Into<Vec<u8>>,
+        bytes: impl Into<Vec<u8>>,
     ) -> Result<Self> {
-        let pixels = pixels.into();
+        let bytes = bytes.into();
         let bpp = format.bytes_per_pixel();
-        ensure_pixel_len(width, height, format, pixels.len(), bpp)?;
+        ensure_pixel_len(width, height, format, bytes.len(), bpp)?;
 
         Ok(Self {
-            pixels,
+            bytes,
             width,
             height,
             format,
@@ -66,11 +66,11 @@ impl Image {
     }
 
     pub fn as_slice(&self) -> &[u8] {
-        &self.pixels
+        &self.bytes
     }
 
     pub fn into_bytes(self) -> Vec<u8> {
-        self.pixels
+        self.bytes
     }
 
     pub fn to_pixels<T: ImagePixel>(&self) -> Result<Vec<T>> {
@@ -107,10 +107,11 @@ impl Image {
     pub fn scale_rgb(&mut self, scale: f32) -> Result<&mut Self> {
         match self.format {
             PixelFormat::PixelFormat128bppRGBAFloat => {
-                for pixel in self.pixels.chunks_exact_mut(16) {
-                    let red = f32_from_le_bytes(&pixel[0..4]) * scale;
-                    let green = f32_from_le_bytes(&pixel[4..8]) * scale;
-                    let blue = f32_from_le_bytes(&pixel[8..12]) * scale;
+                for pixel in self.bytes.as_chunks_mut::<16>().0 {
+                    let channels = pixel.as_chunks::<4>().0;
+                    let red = f32::from_le_bytes(channels[0]) * scale;
+                    let green = f32::from_le_bytes(channels[1]) * scale;
+                    let blue = f32::from_le_bytes(channels[2]) * scale;
 
                     pixel[0..4].copy_from_slice(&red.to_le_bytes());
                     pixel[4..8].copy_from_slice(&green.to_le_bytes());
@@ -118,10 +119,11 @@ impl Image {
                 }
             }
             PixelFormat::PixelFormat64bppRGBAHalfFloat => {
-                for pixel in self.pixels.chunks_exact_mut(8) {
-                    let red = f16::from_le_bytes([pixel[0], pixel[1]]).to_f32() * scale;
-                    let green = f16::from_le_bytes([pixel[2], pixel[3]]).to_f32() * scale;
-                    let blue = f16::from_le_bytes([pixel[4], pixel[5]]).to_f32() * scale;
+                for pixel in self.bytes.as_chunks_mut::<8>().0 {
+                    let channels = pixel.as_chunks::<2>().0;
+                    let red = f16::from_le_bytes(channels[0]).to_f32() * scale;
+                    let green = f16::from_le_bytes(channels[1]).to_f32() * scale;
+                    let blue = f16::from_le_bytes(channels[2]).to_f32() * scale;
 
                     pixel[0..2].copy_from_slice(&f16::from_f32(red).to_le_bytes());
                     pixel[2..4].copy_from_slice(&f16::from_f32(green).to_le_bytes());
@@ -136,26 +138,32 @@ impl Image {
     /// Return finite positive max-RGB values for each valid pixel.
     pub fn positive_max_rgb_values(&self) -> Result<Vec<f32>> {
         match self.format {
-            PixelFormat::PixelFormat128bppRGBAFloat => Ok(self
-                .pixels
-                .chunks_exact(16)
-                .filter_map(|pixel| {
-                    let red = f32_from_le_bytes(&pixel[0..4]);
-                    let green = f32_from_le_bytes(&pixel[4..8]);
-                    let blue = f32_from_le_bytes(&pixel[8..12]);
-                    finite_positive_max_rgb(red, green, blue)
-                })
-                .collect()),
-            PixelFormat::PixelFormat64bppRGBAHalfFloat => Ok(self
-                .pixels
-                .chunks_exact(8)
-                .filter_map(|pixel| {
-                    let red = f16::from_le_bytes([pixel[0], pixel[1]]).to_f32();
-                    let green = f16::from_le_bytes([pixel[2], pixel[3]]).to_f32();
-                    let blue = f16::from_le_bytes([pixel[4], pixel[5]]).to_f32();
-                    finite_positive_max_rgb(red, green, blue)
-                })
-                .collect()),
+            PixelFormat::PixelFormat128bppRGBAFloat => {
+                let pixels = &self.bytes.as_chunks::<16>().0;
+                Ok(pixels
+                    .iter()
+                    .filter_map(|pixel| {
+                        let channels = pixel.as_chunks::<4>().0;
+                        let red = f32::from_le_bytes(channels[0]);
+                        let green = f32::from_le_bytes(channels[1]);
+                        let blue = f32::from_le_bytes(channels[2]);
+                        finite_positive_max_rgb(red, green, blue)
+                    })
+                    .collect())
+            }
+            PixelFormat::PixelFormat64bppRGBAHalfFloat => {
+                let pixels = &self.bytes.as_chunks::<8>().0;
+                Ok(pixels
+                    .iter()
+                    .filter_map(|pixel| {
+                        let channels = pixel.as_chunks::<2>().0;
+                        let red = f16::from_le_bytes(channels[0]).to_f32();
+                        let green = f16::from_le_bytes(channels[1]).to_f32();
+                        let blue = f16::from_le_bytes(channels[2]).to_f32();
+                        finite_positive_max_rgb(red, green, blue)
+                    })
+                    .collect())
+            }
         }
     }
 }
@@ -194,16 +202,30 @@ impl private::Sealed for f32 {}
 impl ImagePixel for f32 {
     fn from_image(image: &Image) -> Result<Vec<Self>> {
         match image.format {
-            PixelFormat::PixelFormat128bppRGBAFloat => Ok(image
-                .pixels
-                .chunks_exact(4)
-                .map(f32_from_le_bytes)
-                .collect()),
-            PixelFormat::PixelFormat64bppRGBAHalfFloat => Ok(image
-                .pixels
-                .chunks_exact(2)
-                .map(|chunk| f16::from_le_bytes([chunk[0], chunk[1]]).to_f32())
-                .collect()),
+            PixelFormat::PixelFormat128bppRGBAFloat => {
+                let (pixels, remainder) = image.bytes.as_chunks::<4>();
+                ensure!(
+                    remainder.is_empty(),
+                    "Incomplete f32 channel: {} trailing bytes",
+                    remainder.len()
+                );
+                Ok(pixels
+                    .iter()
+                    .map(|bytes| f32::from_le_bytes(*bytes))
+                    .collect())
+            }
+            PixelFormat::PixelFormat64bppRGBAHalfFloat => {
+                let (pixels, remainder) = image.bytes.as_chunks::<2>();
+                ensure!(
+                    remainder.is_empty(),
+                    "Incomplete f16 channel: {} trailing bytes",
+                    remainder.len()
+                );
+                Ok(pixels
+                    .iter()
+                    .map(|chunk| f16::from_le_bytes(*chunk).to_f32())
+                    .collect())
+            }
         }
     }
 }
@@ -213,16 +235,30 @@ impl private::Sealed for f16 {}
 impl ImagePixel for f16 {
     fn from_image(image: &Image) -> Result<Vec<Self>> {
         match image.format {
-            PixelFormat::PixelFormat128bppRGBAFloat => Ok(image
-                .pixels
-                .chunks_exact(4)
-                .map(|chunk| f16::from_f32(f32_from_le_bytes(chunk)))
-                .collect()),
-            PixelFormat::PixelFormat64bppRGBAHalfFloat => Ok(image
-                .pixels
-                .chunks_exact(2)
-                .map(|chunk| f16::from_le_bytes([chunk[0], chunk[1]]))
-                .collect()),
+            PixelFormat::PixelFormat128bppRGBAFloat => {
+                let (pixels, remainder) = image.bytes.as_chunks::<4>();
+                ensure!(
+                    remainder.is_empty(),
+                    "Incomplete f32 channel: {} trailing bytes",
+                    remainder.len()
+                );
+                Ok(pixels
+                    .iter()
+                    .map(|chunk| f16::from_f32(f32::from_le_bytes(*chunk)))
+                    .collect())
+            }
+            PixelFormat::PixelFormat64bppRGBAHalfFloat => {
+                let (pixels, remainder) = image.bytes.as_chunks::<2>();
+                ensure!(
+                    remainder.is_empty(),
+                    "Incomplete f16 channel: {} trailing bytes",
+                    remainder.len()
+                );
+                Ok(pixels
+                    .iter()
+                    .map(|chunk| f16::from_le_bytes(*chunk))
+                    .collect())
+            }
         }
     }
 }
@@ -252,10 +288,6 @@ fn ensure_pixel_len(
     Ok(())
 }
 
-fn f32_from_le_bytes(bytes: &[u8]) -> f32 {
-    f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
-}
-
 fn finite_positive_max_rgb(red: f32, green: f32, blue: f32) -> Option<f32> {
     if !red.is_finite() || !green.is_finite() || !blue.is_finite() {
         return None;
@@ -273,8 +305,10 @@ mod tests {
 
     fn f16_bytes_to_f32(bytes: &[u8]) -> Vec<f32> {
         bytes
-            .chunks_exact(2)
-            .map(|chunk| f16::from_le_bytes([chunk[0], chunk[1]]).to_f32())
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|chunk| f16::from_le_bytes(*chunk).to_f32())
             .collect()
     }
 
@@ -286,6 +320,46 @@ mod tests {
         match result {
             Ok(_) => panic!("{message}"),
             Err(error) => error,
+        }
+    }
+
+    #[test]
+    fn to_pixels_rejects_incomplete_f32_channels() {
+        let image = Image {
+            bytes: vec![0; 5],
+            width: 1,
+            height: 1,
+            format: PixelFormat::PixelFormat128bppRGBAFloat,
+        };
+
+        for error in [
+            image.to_pixels::<f32>().unwrap_err(),
+            image.to_pixels::<f16>().unwrap_err(),
+        ] {
+            assert_eq!(
+                error.to_string(),
+                "Incomplete f32 channel: 1 trailing bytes"
+            );
+        }
+    }
+
+    #[test]
+    fn to_pixels_rejects_incomplete_f16_channels() {
+        let image = Image {
+            bytes: vec![0; 3],
+            width: 1,
+            height: 1,
+            format: PixelFormat::PixelFormat64bppRGBAHalfFloat,
+        };
+
+        for error in [
+            image.to_pixels::<f32>().unwrap_err(),
+            image.to_pixels::<f16>().unwrap_err(),
+        ] {
+            assert_eq!(
+                error.to_string(),
+                "Incomplete f16 channel: 1 trailing bytes"
+            );
         }
     }
 
