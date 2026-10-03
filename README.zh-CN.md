@@ -36,15 +36,10 @@ flowchart LR
 
 ## 安装
 
-```bash
-cargo install --path jxr2uhdr-cli
-```
-
-或仅构建，不安装：
+从[最新发布版本](https://github.com/tfx2001/jxr2uhdr/releases/latest)下载适用于你所用平台的可执行文件，或使用 Cargo 从源码构建并安装：
 
 ```bash
-cargo build --release -p jxr2uhdr
-# 产物路径：target/release/jxr2uhdr
+cargo install --git https://github.com/tfx2001/jxr2uhdr
 ```
 
 ## 用法
