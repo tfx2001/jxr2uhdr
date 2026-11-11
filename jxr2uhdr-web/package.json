@@ -12,7 +12,7 @@
   "dependencies": {
     "@iconify/vue": "^5.0.0",
     "vue": "^3.5.32",
-    "vue-i18n": "^11.3.2"
+    "vue-i18n": "^11.4.14"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
